@@ -1,6 +1,14 @@
+# TransAdvAttForNIDS
+
+This repository contains the official implementation of our paper:
+
+> Zhongshu Mao, Yiqin Lu, Zhe Cheng, and Kaiqiong Chen.  
+> **Exploring Transferable Adversarial Attacks for Deep Learning-based Network Intrusion Detection**  
+> Journal of Network and Computer Applications (JNCA), 2025, 104255.
+
 # 1 Introduction
 
-To make the repository easier to navigate and to help readers reproduce the experiments in the paper, we grouped all experiments into three categories:
+This project focuses on adversarial attack traffic (AAT) generation methods for Network Intrusion Detection Systems (NIDS). It aims to evaluate the robustness and generalization ability of deep learning models under adversarial perturbations in structured data scenarios. To make the repository easier to navigate and to help readers reproduce the experiments in the paper, we grouped all experiments into three categories:
 1. Reproducing the manuscript’s results.
     
     We provide pre-processed datasets and the corresponding generated AAT, enabling users to reproduce almost all results reported in the manuscript.
