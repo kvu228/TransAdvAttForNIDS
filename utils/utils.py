@@ -18,7 +18,7 @@ from utils.surrogate_model_with_var_input_fea import mlp_s_varfea
 
 # Global storage directory path for datasets and models
 # Must be configured before running any scripts
-STORAGE_DIR = '/mmlab_students/storageStudents/nguyenvd/nids/TransAdvAttForNIDS/storage'
+STORAGE_DIR = ''
 
 def normalize_df(df, df_minmax):
     """
