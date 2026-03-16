@@ -189,36 +189,18 @@ def init_net(model_type, model_name: str):
             net = SelfAttention_s()
     return net
 
-def load_net(model_name: str, fp_model: str):
+def load_net(model_name_or_fea_num, fp_model_or_name: str = None, fp_model_opt: str = None):
     """
     Load a pre-trained neural network model from a saved checkpoint.
-    
-    Automatically detects the model type (target or surrogate) and architecture
-    from the model name, then loads the corresponding weights from the checkpoint file.
-    
-    Args:
-        model_name (str): Name of the model. Must contain architecture identifier.
-            Examples: 'ton_mlp_s', 'ids18_cnn_t', 'advtrain_withSPTS_ton_mlp'
-            The function detects model type by checking if name ends with 's' (surrogate)
-            or contains architecture identifiers like '_mlp_t', '_cnn_s', etc.
-        fp_model (str): Path to the saved model checkpoint file (.pth file).
-            The file should contain a state_dict saved with torch.save().
-    
-    Returns:
-        torch.nn.Module: Model loaded with pre-trained weights.
-            Returns None if model_name is not recognized.
-    
-    Raises:
-        FileNotFoundError: If fp_model does not exist.
-        RuntimeError: If the checkpoint file cannot be loaded or weights don't match.
-    
-    Example:
-        >>> model = load_net('ton_mlp_s', 'path/to/ton_mlp_s.pth')
-        >>> model = load_net('ids18_cnn_t', 'path/to/ids18_cnn_t.pth')
-    
-    Note:
-        The function uses weights_only=True for security when loading checkpoints.
+    Supports: load_net(model_name, fp_model) or load_net(fea_num, model_name, fp_model).
+    When fea_num=78, target models use 78-input variants from target_models_with_78_fea.
     """
+    fea_num = None
+    if fp_model_opt is not None:
+        fea_num = model_name_or_fea_num
+        model_name, fp_model = fp_model_or_name, fp_model_opt
+    else:
+        model_name, fp_model = model_name_or_fea_num, fp_model_or_name
     net = None
     if model_name[-1] == 's':
         if '_mlp_s' in model_name:
@@ -238,20 +220,21 @@ def load_net(model_name: str, fp_model: str):
             net.load_state_dict(torch.load(fp_model, weights_only=True))
         return net
     else:
+        use_78 = (fea_num == 78)
         if '_mlp_t' in model_name:
-            net = mlp_t()
+            net = mlp_t_78() if use_78 else mlp_t()
             net.load_state_dict(torch.load(fp_model, weights_only=True))
         if '_cnn_t' in model_name:
-            net = cnn_t()
+            net = cnn_t_78() if use_78 else cnn_t()
             net.load_state_dict(torch.load(fp_model, weights_only=True))
         if '_rescnn_t' in model_name:
-            net = ResCNN_t()
+            net = ResCNN_t_78() if use_78 else ResCNN_t()
             net.load_state_dict(torch.load(fp_model, weights_only=True))
         if '_lstm_t' in model_name:
-            net = lstm_t()
+            net = lstm_t_78() if use_78 else lstm_t()
             net.load_state_dict(torch.load(fp_model, weights_only=True))
         if '_Selfattention_t' in model_name:
-            net = SelfAttention_t()
+            net = SelfAttention_t_78() if use_78 else SelfAttention_t()
             net.load_state_dict(torch.load(fp_model, weights_only=True))
         return net
 
