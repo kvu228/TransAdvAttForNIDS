@@ -163,3 +163,6 @@ $RECYCLE.BIN/
 # reproduce_experiments_results/*.png
 # reproduce_experiments_results/*.pdf
 # reproduce_experiments_results/*.jpg
+
+simulation_logs.db
+/docs
