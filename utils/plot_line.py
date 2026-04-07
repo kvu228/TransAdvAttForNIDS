@@ -3,9 +3,10 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
+from pathlib import Path
 
 
-def plot_line(input:pd.DataFrame):
+def plot_line(input: pd.DataFrame, fp_out: str = None):
     df = input.reset_index()
 
     SM_model_nams = ['mlp_s', 'cnn_s', 'rescnn_s', 'lstm_s', 'Selfattention_s']
@@ -65,4 +66,8 @@ def plot_line(input:pd.DataFrame):
 
     plt.tight_layout()
     plt.subplots_adjust(hspace=0.4, wspace=0.5)
+    if fp_out:
+        out_path = Path(fp_out)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        plt.savefig(out_path, dpi=150, bbox_inches='tight')
     plt.show()

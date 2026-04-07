@@ -1,3 +1,17 @@
+"""Mục 5.4.4 — Figure 8 (IDS2018).
+
+Khảo sát **số đặc trưng đầu vào của surrogate** (27, 30, …, 66) khi sinh adversarial
+(MIFGSM, SIM, VMIFGSM, DGM) và đo Recall của target (66 fea) trên các file trong
+``STORAGE_DIR/5_4_4/{exno}_{dsn}_adv_flow/{Attack}_{fea_num}.csv``.
+
+Hyperparameter:
+    - ``experiment_no = [0,1,2]``: ba lần lặp độc lập; kết quả figure là **trung bình** 3 run
+      để giảm nhiễu ngẫu nhiên của tấn công/huấn luyện.
+    - ``fea_nums = range(27, 67, 3)``: lưới thưa, đủ phủ từ thiếu đặc trưng tới đủ 66.
+    - ``load_net(60, ...)``: target vẫn 60-dim theo checkpoint thí nghiệm mục này (khác Fig.2).
+
+Đầu ra: ``output/figures/fig8.png``.
+"""
 import os, sys
 project_root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root_dir)
@@ -8,6 +22,17 @@ import torch
 from torch.utils.data import DataLoader
 
 def main(dsn, mnt, an, fea_num, fp_dataset, fp_minmax, fp_fea, fp_model):
+    """Recall attack của target trên adversarial sinh với ``fea_num`` đặc trưng surrogate.
+
+    Args:
+        dsn: ``ids18`` hoặc ``ton``.
+        mnt, an: Target và tên tấn công (khớp thư mục/file CSV).
+        fea_num: Số chiều đặc trưng surrogate khi tạo adv (cột trong ma trận kết quả).
+        fp_dataset, fp_minmax, fp_fea, fp_model: Đường dẫn dữ liệu và model target.
+
+    Returns:
+        float: TP/(TP+FN).
+    """
     # hyper
     dev = torch.device('cuda')
     batch_size = 128
@@ -67,4 +92,5 @@ if __name__ == '__main__':
     val = (res[0].values + res[1].values + res[2].values) / 3
     df_res = pd.DataFrame(val, index=df.index, columns=df.columns).round(1)
     print(df_res)
-    plot_line2(df_res)
+    fp_fig = os.path.join(project_root_dir, 'output', 'figures', 'fig8.png')
+    plot_line2(df_res, fp_fig)

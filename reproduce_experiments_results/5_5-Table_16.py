@@ -1,3 +1,8 @@
+"""Mục 5.5 — Table 16 (chi phí tấn công: VMIFGSM, DGM).
+
+Giống ``5_5-Table_15.py`` nhưng ``attack_names = ['VMIFGSM', 'DGM']`` — cùng ``batch_size``,
+mask, và (iteration=7, step=140) trong lời gọi attack.
+"""
 import os, sys
 project_root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root_dir)
@@ -15,6 +20,7 @@ import subprocess
 
 
 def get_mask(list_col:list, batch_size):
+    """Xem ``5_5-Table_15.get_mask``."""
     df_temp = pd.DataFrame([[0.] * len(list_col)], columns=list_col)
     df_temp["Fwd Pkt Len Max"] = 1.
     df_temp["Fwd Pkt Len Min"] = 1.
@@ -25,6 +31,7 @@ def get_mask(list_col:list, batch_size):
 
 
 def main(dsn, mns, an):
+    """Xem ``5_5-Table_15.main``."""
     batch_size = 128
     dev = torch.device("cuda")
     att = None
@@ -106,6 +113,6 @@ if __name__ == "__main__":
                 print(df)
         res.append(df)
     
-    val = res[0].values.astype(str) + '/' + res[0].values.astype(str)
+    val = res[0].values.astype(str) + '/' + res[1].values.astype(str)
     df_res = pd.DataFrame(val, index=df.index, columns=df.columns).round(1)
     print(df_res)

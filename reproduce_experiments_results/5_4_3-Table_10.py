@@ -1,3 +1,13 @@
+"""Mục 5.4.3 — Table 10.
+
+Huấn luyện / đánh giá mô hình trên **tập test có trộn tỷ lệ** adversarial (``ratios`` 0.1–0.4):
+mỗi cặp (model, ratio) dùng CSV ``5_4_3/dataset/{dsn}_raw_test_dataset_{t|s}_{ra}.csv``,
+minmax ``{dsn}_minmax_{t|s}_{ra}``, checkpoint ``5_4_3/pre-trained_models/{dsn}_{mn}_{ra}.pth``.
+
+Metrics: Acc, Pre, Rec, F1 (đầy đủ ma trận nhầm lẫn). ``mlp_s`` nằm cùng lưới với ``*_t``.
+
+Hyperparameter: ``batch_size=128``; ``load_net(66, ...)`` cho chiều vào 66 trong setup này.
+"""
 import os, sys
 project_root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root_dir)
@@ -8,6 +18,7 @@ from torch.utils.data import DataLoader
 import math
 
 def main(dsn, mn, ra, fp_dataset, fp_fea, fp_minmax, fp_model):
+    """Đánh giá một checkpoint tại tỷ lệ trộn ``ra``; trả về (acc, pre, rec, f1)."""
     dev = torch.device('cuda')
     batch_size = 128
 

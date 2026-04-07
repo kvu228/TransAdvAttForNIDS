@@ -1,3 +1,18 @@
+"""Mục 5.4.1 — Figure 2 (IDS2018).
+
+Đánh giá độ bền của các mục tiêu (target) khi traffic đối kháng do tấn công DGM tạo ra,
+với surrogate cố định là ``mlp_s``. Lưới thử: ``step_size`` × ``iteration`` (siêu tham số
+của DGM trong pipeline sinh dữ liệu AAT), mỗi ô là tỷ lệ phát hiện attack (Recall trên lớp
+attack: TP/(TP+FN)) của một target đã huấn luyện trên traffic sạch.
+
+Hyperparameter trong script:
+    - ``batch_size=128``: cân bằng throughput GPU và ổn định bộ nhớ; đồng bộ các script reproduce.
+    - ``step_sizes`` [80..180] bước 20, ``iterations`` [3,5,...,13]: lưới theo paper để xem
+      độ nhạy của hiệu quả tấn công theo bước và số vòng lặp DGM.
+    - Target dùng 66 đặc trưng (``load_net(66, ...)``) và minmax/fea của tập ``_t``.
+
+Đầu ra: ``output/figures/fig2.png`` (heatmap).
+"""
 import os, sys
 project_root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root_dir)
@@ -8,6 +23,19 @@ import torch
 from torch.utils.data import DataLoader
 
 def main(mn_t, ss, ite, fp_dataset, fp_minmax, fp_fea, fp_model):
+    """Chạy inference một lần trên CSV adversarial và trả về recall phát hiện attack.
+
+    Args:
+        mn_t: Tên target (ví dụ ``mlp_t``); dùng cùng biến global ``dsn`` để tạo ``model_name``.
+        ss: Step size DGM (khớp tên file ``{ite}_{ss}.csv``).
+        ite: Số iteration DGM (khớp tên file).
+        fp_dataset: CSV luồng adversarial (AAT).
+        fp_minmax, fp_fea: Chuẩn hóa theo tập target.
+        fp_model: Checkpoint target (normal_train).
+
+    Returns:
+        float: ``TP / (TP + FN)`` trên toàn tập (chỉ quan tâm phát hiện đúng attack).
+    """
     # hyper
     dev = torch.device('cuda')
     batch_size = 128
@@ -60,6 +88,7 @@ if __name__ == '__main__':
             acc = main(mn_t, ss, ite, fp_dataset, fp_minmax, fp_fea, fp_model)
             df.loc[(mn_t, ss), ite] = round(acc * 100, 1)
             print(df)
-    plot_hm(df)
+    fp_fig = os.path.join(project_root_dir, 'output', 'figures', 'fig2.png')
+    plot_hm(df, fp_fig)
 
     

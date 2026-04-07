@@ -2,8 +2,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import matplotlib.gridspec as gridspec
+from pathlib import Path
 
-def plot_line2(input:pd.DataFrame):
+def plot_line2(input: pd.DataFrame, fp_out: str = None):
     df = input.reset_index()
 
     feature_cols = [c for c in df.columns if c not in ["Target Model", "Attack"]]
@@ -70,4 +71,8 @@ def plot_line2(input:pd.DataFrame):
             fontsize=7)
 
     plt.tight_layout(rect=[0, 0, 0.93, 1])
+    if fp_out:
+        out_path = Path(fp_out)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        plt.savefig(out_path, dpi=150, bbox_inches='tight')
     plt.show()

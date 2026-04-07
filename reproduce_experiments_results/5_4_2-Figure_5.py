@@ -1,3 +1,9 @@
+"""Mục 5.4.2 — Figure 5 (TON_IoT).
+
+Cùng thiết kế với ``5_4_2-Figure_4.py`` (copies vs Recall, ``dropout_rate=0.2``, DGM).
+
+Đầu ra: ``output/figures/fig5.png``.
+"""
 import os, sys
 project_root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root_dir)
@@ -8,6 +14,7 @@ import torch
 from torch.utils.data import DataLoader
 
 def main(mn_s, cpn, dropout_rate, mn_t, fp_dataset, fp_minmax, fp_fea, fp_model):
+    """Recall attack của target trên AAT DGM (surrogate × copies × dropout). Xem Figure_4."""
     dev = torch.device('cuda')
     batch_size = 128
 
@@ -62,4 +69,5 @@ if __name__ == '__main__':
 
     df['Average'] = df.mean(axis=1).round(1)
     print(df)
-    plot_line(df)
+    fp_fig = os.path.join(project_root_dir, 'output', 'figures', 'fig5.png')
+    plot_line(df, fp_fig)

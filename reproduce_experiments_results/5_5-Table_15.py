@@ -1,3 +1,17 @@
+"""Mục 5.5 — Table 15 (chi phí tấn công: MIFGSM, SIM).
+
+Đo **chi phí thực thi** khi sinh adversarial từ traffic attack thô: thời gian (µs/mẫu),
+độ dài payload trung bình, độ trễ IAT — lũy kế trên toàn ``{dsn}_raw_att.csv`` theo chunk.
+
+Hyperparameter:
+    - ``batch_size=128``: đồng bộ với huấn luyện/đánh giá; chunk đọc CSV.
+    - ``7, 140`` truyền vào hàm attack: **số iteration và step size** (cùng cấu hình chuẩn
+      như file ``7_140.csv`` trong AAT) để số liệu overhead so sánh được với thí nghiệm transfer.
+    - ``get_mask``: cố định một số trường độ dài/IAT (Fwd ...) = 1 — **ràng buộc chỉnh sửa**
+      theo thiết kế tấn công trong paper (chỉ perturb các đặc trưng được phép).
+
+Surrogate LSTM chạy ``train()`` (dropout hoạt động) theo convention dự án; các kiến trúc khác ``eval()``.
+"""
 import os, sys
 project_root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root_dir)
@@ -15,6 +29,15 @@ import subprocess
 
 
 def get_mask(list_col:list, batch_size):
+    """Tạo tensor mask [B, F]: 0 = có thể perturb; 1 = khóa (Fwd Len/IAT min-max).
+
+    Args:
+        list_col: Tên cột trùng ``fea_s.csv``.
+        batch_size: Số hàng lặp mask.
+
+    Returns:
+        torch.Tensor: mask CPU, caller đưa lên GPU.
+    """
     df_temp = pd.DataFrame([[0.] * len(list_col)], columns=list_col)
     df_temp["Fwd Pkt Len Max"] = 1.
     df_temp["Fwd Pkt Len Min"] = 1.
@@ -25,6 +48,10 @@ def get_mask(list_col:list, batch_size):
 
 
 def main(dsn, mns, an):
+    """Chạy attack ``an`` trên toàn raw attack flows; trả về (time_ave µs, payload_ave, iat_ave).
+
+    ``time_ave`` = (tổng thời gian / số mẫu) * 1e6; các giá trị payload/IAT do hàm attack trả về.
+    """
     batch_size = 128
     dev = torch.device("cuda")
     att = None
@@ -106,6 +133,6 @@ if __name__ == "__main__":
                 print(df)
         res.append(df)
     
-    val = res[0].values.astype(str) + '/' + res[0].values.astype(str)
+    val = res[0].values.astype(str) + '/' + res[1].values.astype(str)
     df_res = pd.DataFrame(val, index=df.index, columns=df.columns).round(1)
     print(df_res)

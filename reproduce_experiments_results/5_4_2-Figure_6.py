@@ -1,3 +1,12 @@
+"""Mục 5.4.2 — Figure 6 (IDS2018).
+
+Bar chart: Recall target trên adversarial DGM khi **cố định** ``cpn=5`` và quét
+``dropout_rate`` ∈ {0.2, 0.4, 0.6, 0.8}. Bổ trợ Fig.4 (quét copies tại dropout=0.2).
+
+Hyperparameter: ``cpn=5`` chọn ở giữa lưới copies để tách biến dropout; ``batch_size=128``.
+
+Đầu ra: ``output/figures/fig6.png``.
+"""
 import os, sys
 project_root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root_dir)
@@ -8,6 +17,7 @@ import torch
 from torch.utils.data import DataLoader
 
 def main(mn_s, cpn, dropout_rate, mn_t, fp_dataset, fp_minmax, fp_fea, fp_model):
+    """Recall TP/(TP+FN); ``fp_dataset`` tương ứng ``{cpn}_{dropout_rate}.csv``."""
     dev = torch.device('cuda')
     batch_size = 128
 
@@ -62,4 +72,5 @@ if __name__ == '__main__':
 
     df['Average'] = df.mean(axis=1).round(1)
     print(df)
-    plot_bar(df)
+    fp_fig = os.path.join(project_root_dir, 'output', 'figures', 'fig6.png')
+    plot_bar(df, fp_fig)

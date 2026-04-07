@@ -1,3 +1,9 @@
+"""Mục 5.4.3 — Table 12.
+
+Giống Table 11 nhưng **``ratio_t=0.2``** (checkpoint và minmax tương ứng ``_0.2``).
+
+Lý do tách file: mỗi mức ``ratio_t`` cần bộ weight và minmax riêng; giữ script ngắn, dễ chạy song song.
+"""
 import os, sys
 project_root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root_dir)
@@ -7,6 +13,7 @@ import torch
 from torch.utils.data import DataLoader
 
 def main(ratio_t, dsn, ras, an, mn_t, fp_dataset, fp_minmax, fp_fea, fp_model):
+    """Recall target; ``ratio_t`` khớp checkpoint ``{dsn}_{mn_t}_{ratio_t}.pth``."""
     # hyper
     dev = torch.device('cuda')
     batch_size = 128

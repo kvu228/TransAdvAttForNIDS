@@ -1,3 +1,8 @@
+"""Mục 5.6 — Table 18 (hardening: adv_train_with_SPTS).
+
+Giống Table 17 nhưng checkpoint lấy từ ``pre-trained_models/adv_train_with_SPTS`` —
+huấn luyện adversarial kèm **SPTS** (theo paper). Cùng dữ liệu đánh giá AAT và ``load_net(66)``.
+"""
 import os, sys
 project_root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root_dir)
@@ -8,6 +13,7 @@ from torch.utils.data import DataLoader
 import math
 
 def main(adv_train_type, dsn, an, mnt, fp_dataset, fp_minmax, fp_fea, fp_model):
+    """Recall trên adv; xem Table_17."""
     dev = torch.device('cuda')
     batch_size = 128
     dataset = CustomDataset(fp_dataset, fp_minmax, fp_fea)

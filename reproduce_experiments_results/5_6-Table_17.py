@@ -1,3 +1,12 @@
+"""Mục 5.6 — Table 17 (hardening: normal_adv_train).
+
+Đánh giá target được huấn luyện **adversarial thông thường** (thư mục checkpoint
+``pre-trained_models/normal_adv_train``): trên cùng AAT ``mlp_s`` × attack, file ``7_140.csv``.
+
+Metric: Recall phát hiện attack ``TP/(TP+FN)``; ``load_net(66, ...)``.
+
+So sánh với Table 18 (``adv_train_with_SPTS``) để đo lợi ích phương pháp SPTS.
+"""
 import os, sys
 project_root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root_dir)
@@ -8,6 +17,7 @@ from torch.utils.data import DataLoader
 import math
 
 def main(adv_train_type, dsn, an, mnt, fp_dataset, fp_minmax, fp_fea, fp_model):
+    """Recall của ``mnt`` trên adv; ``adv_train_type`` chỉ để log và chọn thư mục weight ngoài hàm."""
     dev = torch.device('cuda')
     batch_size = 128
     dataset = CustomDataset(fp_dataset, fp_minmax, fp_fea)

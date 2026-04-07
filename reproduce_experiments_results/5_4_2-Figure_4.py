@@ -1,3 +1,15 @@
+"""Mục 5.4.2 — Figure 4 (IDS2018).
+
+Đánh giá ảnh hưởng của số bản sao (copies) trong DGM lên khả năng làm giảm Recall target.
+Mỗi surrogate ``*_s`` sinh adversarial với ``dropout_rate`` cố định; thay đổi ``cpn`` ∈ {1,3,5,7,9}.
+
+Hyperparameter:
+    - ``dropout_rate=0.2``: một điểm cố định trên trục dropout (Fig.6/7 khảo sát thêm các mức khác).
+    - ``batch_size=128``: nhất quán pipeline.
+    - File AAT: ``{cpn}_{dropout_rate}.csv`` trong thư mục ``DGM`` của từng surrogate.
+
+Đầu ra: ``output/figures/fig4.png`` (line plot, thêm cột Average).
+"""
 import os, sys
 project_root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root_dir)
@@ -8,6 +20,18 @@ import torch
 from torch.utils.data import DataLoader
 
 def main(mn_s, cpn, dropout_rate, mn_t, fp_dataset, fp_minmax, fp_fea, fp_model):
+    """Đo Recall attack của target trên adversarial theo (surrogate, copies, dropout).
+
+    Args:
+        mn_s: Loại surrogate (vd. ``mlp_s``); chỉ để log, đường dẫn đã nằm trong ``fp_dataset``.
+        cpn: Số copies trong cấu hình DGM (tên file ``{cpn}_{dropout_rate}.csv``).
+        dropout_rate: Tỷ lệ dropout trong sinh DGM.
+        mn_t: Target; ``load_net(66, f'{dsn}_{mn_t}', ...)``.
+        fp_dataset, fp_minmax, fp_fea, fp_model: CSV AAT và checkpoint target.
+
+    Returns:
+        float: TP/(TP+FN) trên tập adversarial.
+    """
     dev = torch.device('cuda')
     batch_size = 128
 
@@ -62,4 +86,5 @@ if __name__ == '__main__':
 
     df['Average'] = df.mean(axis=1).round(1)
     print(df)
-    plot_line(df)
+    fp_fig = os.path.join(project_root_dir, 'output', 'figures', 'fig4.png')
+    plot_line(df, fp_fig)

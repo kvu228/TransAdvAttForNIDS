@@ -1,3 +1,13 @@
+"""Mục 5.3.1 — Table 8.
+
+Ma trận Recall attack của **target** (huấn luyện sạch, 60 fea) trên:
+    - Adversarial sinh từ từng surrogate ``*_s`` + từng attack (MIFGSM, SIM, VMIFGSM, DGM),
+      file cố định ``7_140.csv`` (iteration=7, step=140 — cấu hình chuẩn thí nghiệm transfer).
+    - Baseline ``raw_att_traffic`` (không qua surrogate): ``{dsn}_raw_att.csv``.
+
+Hyperparameter: ``batch_size=128``; ``load_net(60, ...)`` khớp target 60 đặc trưng.
+In ra bảng ghép IDS18/TON (chuỗi ``x/y``) và cột trung bình theo target.
+"""
 import os, sys
 project_root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root_dir)
@@ -7,6 +17,7 @@ import torch
 from torch.utils.data import DataLoader
 
 def main(dsn, mn_s, an, mn_t, fp_dataset, fp_minmax, fp_fea, fp_model):
+    """Recall TP/(TP+FN) của ``mn_t`` trên ``fp_dataset`` (adv hoặc raw)."""
     # hyper
     dev = torch.device('cuda')
     batch_size = 128

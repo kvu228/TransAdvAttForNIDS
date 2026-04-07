@@ -1,3 +1,16 @@
+"""Mục 5.2 — Table 5.
+
+Đánh giá **tập test sạch** (không adversarial) cho IDS2018 và TON_IoT: Acc, Precision,
+Recall, F1 theo số đặc trưng và loại mô hình (target 78/66 fea, surrogate 60 fea).
+
+Hyperparameter / thiết kế:
+    - ``fea_nums = [78, 66, 60]``: ba cấu hình đặc trưng trong paper; 78 dùng thư mục
+      ``normal_train_with_78_fea`` và file ``fea_78`` / minmax riêng (``5_2``).
+    - ``batch_size=128``: đồng nhất các script.
+    - Kết quả in ra: cột dạng ``Acc(IDS18/TON)`` ghép hai dataset sau khi chạy xong cả hai.
+
+``main`` dùng đầy đủ TP/FP/TN/FN (khác các script chỉ báo Recall trên attack).
+"""
 import os, sys
 project_root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root_dir)
@@ -8,6 +21,19 @@ from torch.utils.data import DataLoader
 import math
 
 def main(dsn, fea_num, mn, fp_dataset, dir_model, fp_fea, fp_minmax):
+    """Đánh giá một checkpoint trên ``fp_dataset``.
+
+    Args:
+        dsn: Tên dataset (tiền tố model).
+        fea_num: Chiều vào của mạng (78, 66 hoặc 60).
+        mn: Tên model (``*_t`` hoặc ``*_s``).
+        fp_dataset: CSV test (``{dsn}_test_{t|s}.csv``).
+        dir_model: Thư mục chứa ``{dsn}_{mn}.pth``.
+        fp_fea, fp_minmax: Danh sách cột và min-max tương ứng ``fea_num``.
+
+    Returns:
+        tuple: (acc, pre, rec, f1) dạng float [0,1].
+    """
     dev = torch.device('cuda')
     batch_size = 128
 

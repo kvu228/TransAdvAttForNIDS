@@ -1,3 +1,10 @@
+"""Mục 5.4.4 — Figure 9 (TON_IoT).
+
+Cùng thiết kế ``5_4_4-Figure_8.py`` với ``dsn='ton'``: trung bình 3 experiment_no,
+đường cong Recall theo số đặc trưng surrogate cho từng attack × target.
+
+Đầu ra: ``output/figures/fig9.png``.
+"""
 import os, sys
 project_root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root_dir)
@@ -8,6 +15,7 @@ import torch
 from torch.utils.data import DataLoader
 
 def main(dsn, mnt, an, fea_num, fp_dataset, fp_minmax, fp_fea, fp_model):
+    """Recall trên adv theo ``fea_num``; xem module docstring Figure_8."""
 
     dev = torch.device('cuda')
     batch_size = 128
@@ -67,4 +75,5 @@ if __name__ == '__main__':
     val = (res[0].values + res[1].values + res[2].values) / 3
     df_res = pd.DataFrame(val, index=df.index, columns=df.columns).round(1)
     print(df_res)
-    plot_line2(df_res)
+    fp_fig = os.path.join(project_root_dir, 'output', 'figures', 'fig9.png')
+    plot_line2(df_res, fp_fig)

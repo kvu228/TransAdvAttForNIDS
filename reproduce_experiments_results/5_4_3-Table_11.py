@@ -1,3 +1,15 @@
+"""Mục 5.4.3 — Table 11.
+
+Target được huấn luyện/harden với tỷ lệ trộn **cố định** ``ratio_t=0.1`` (checkpoint
+``{dsn}_{mn_t}_0.1``). Đo Recall trên adversarial sinh bởi surrogate **MLP** tại các
+``ratios_s`` và từng attack (kèm ``raw_att_traffic``).
+
+Hyperparameter:
+    - ``ratio_t=0.1``: một điểm trên trục robust training; Tables 12–14 lần lượt dùng 0.2, 0.3, 0.4.
+    - ``load_net(60, ...)``, minmax ``5_4_3/dataset/{dsn}_minmax_t_{ratio_t}.csv``.
+
+Đầu ra: bảng in console, cột ghép IDS18/TON.
+"""
 import os, sys
 project_root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root_dir)
@@ -7,6 +19,7 @@ import torch
 from torch.utils.data import DataLoader
 
 def main(ratio_t, dsn, ras, an, mn_t, fp_dataset, fp_minmax, fp_fea, fp_model):
+    """Recall của target đã train với ``ratio_t`` trên file adv ``{an}_{ras}.csv``."""
     # hyper
     dev = torch.device('cuda')
     batch_size = 128

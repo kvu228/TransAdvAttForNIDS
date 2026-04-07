@@ -1,3 +1,7 @@
+"""Mục 5.3.1 — thống kê nhãn (TON_IoT raw attack traffic).
+
+Giống ``5_3_1-Table_6.py`` cho ``ton_raw_att.csv`` (đếm nhãn + tổng mẫu).
+"""
 import os, sys
 project_root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root_dir)

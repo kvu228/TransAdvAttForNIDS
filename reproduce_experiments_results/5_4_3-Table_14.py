@@ -1,3 +1,6 @@
+"""Mục 5.4.3 — Table 14.
+
+Cùng thiết kế Table 11 với **``ratio_t=0.4``**."""
 import os, sys
 project_root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root_dir)
@@ -7,6 +10,7 @@ import torch
 from torch.utils.data import DataLoader
 
 def main(ratio_t, dsn, ras, an, mn_t, fp_dataset, fp_minmax, fp_fea, fp_model):
+    """Recall target; xem Table_11."""
     # hyper
     dev = torch.device('cuda')
     batch_size = 128

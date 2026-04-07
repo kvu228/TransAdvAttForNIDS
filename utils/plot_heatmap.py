@@ -2,8 +2,9 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import seaborn as sns
 import pandas as pd
+from pathlib import Path
 
-def plot_hm(input:pd.DataFrame):
+def plot_hm(input: pd.DataFrame, fp_out: str = None):
     df = input.reset_index()
 
     model_names = ['mlp_t', 'cnn_t', 'rescnn_t', 'lstm_t', 'Selfattention_t']
@@ -65,4 +66,8 @@ def plot_hm(input:pd.DataFrame):
 
     # Adjust layout
     plt.tight_layout(rect=[0, 0, 0.8, 1])  # Leave space for the colorbar
+    if fp_out:
+        out_path = Path(fp_out)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        plt.savefig(out_path, dpi=150, bbox_inches='tight')
     plt.show()

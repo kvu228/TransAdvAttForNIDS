@@ -1,3 +1,14 @@
+"""Mục 5.3.2 — Table 9 (TON_IoT, baseline TANTRA).
+
+So sánh transfer attack lên target TON: surrogate × attack, thêm ``TANTRA`` và ``raw_att_traffic``
+(không surrogate). Chạy ``repeat_nums = [0,1,2]`` rồi **trung bình** để ổn định kết quả.
+
+Hyperparameter:
+    - ``load_net(66, 'ton_{mn_t}', ...)``: target TON dùng 66 đặc trưng trong thí nghiệm này.
+    - ``batch_size=128``.
+
+Đường dẫn adv: ``5_3_2/adv_flow/`` theo quy ước trong vòng lặp.
+"""
 import os, sys
 project_root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root_dir)
@@ -7,6 +18,7 @@ import torch
 from torch.utils.data import DataLoader
 
 def main(mn_s, an, mn_t, fp_dataset, fp_minmax, fp_fea, fp_model):
+    """Recall trên một file adv/raw; model luôn checkpoint ``ton_{mn_t}``."""
     dev = torch.device('cuda')
     batch_size = 128
     dataset = CustomDataset(fp_dataset, fp_minmax, fp_fea)
