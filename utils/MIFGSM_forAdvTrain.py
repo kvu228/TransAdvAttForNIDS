@@ -1,3 +1,8 @@
+"""MI-FGSM cho **huấn luyện adversarial**: dùng nhãn thật ``labels`` (không cố định toàn 1).
+
+Tensor đầu vào được clamp [0,1] sau chuẩn hóa; thay ``inf`` để tránh NaN. Phù hợp stage
+``adv_train`` / ``normal_adv_train`` trong repo.
+"""
 import os, sys
 project_root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if project_root_dir not in sys.path: sys.path.append(project_root_dir)
@@ -8,6 +13,7 @@ import numpy as np
 
 
 def MIFGSM_forAdvTrain(model, lossfn, flows:pd.DataFrame, labels:torch.Tensor, mask1, step, step_length, device, min_val, max_val):
+    """Trả về chỉ ``adv_flows`` (không đo thời gian/payload như ``MIFGSM``)."""
 
     momentum = 0.
     mu = 1.5

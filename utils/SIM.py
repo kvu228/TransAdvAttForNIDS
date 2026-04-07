@@ -1,14 +1,19 @@
+"""SIM (Scale-Invariant attack Method): trung bình gradient trên nhiều bản scale của input.
+
+``nums_of_copies=5``: loss trên ``adv_tensor_temp / (2**i)`` rồi gộp gradient; momentum + sign,
+mask giống MI-FGSM. Perturb trên thang đặc trưng gốc + ``rectify_adv_flows``.
+"""
 import os, sys
 project_root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if project_root_dir not in sys.path: sys.path.append(project_root_dir)
 import torch
 import pandas as pd
-import random
 from utils.utils import rectify_adv_flows
 import time
 
 
 def SIM(model, lossfn, flows, labels, mask, step, step_length, device, min_val, max_val):
+    """Tham số tương tự ``MIFGSM``; ``mask`` khóa chiều perturb."""
     t1 = time.perf_counter()
     momentum = 0.
     mu = 1.
@@ -17,13 +22,11 @@ def SIM(model, lossfn, flows, labels, mask, step, step_length, device, min_val, 
 
     for _ in range(step):
         adv_df = adv_flows.copy(deep=True)
-        # 对数据进行规范化
         adv_df = (adv_df - min_val) / (max_val - min_val)
         adv_df = adv_df.fillna(0)
         adv_tensor = torch.from_numpy(adv_df.values).float().to(device)
         labels_tensor = torch.ones(adv_tensor.size(0), dtype=torch.long).to(device)
 
-        # 根据算法，生成扰动方向
         g_agg = torch.zeros(adv_tensor.data.shape).to(device)
         for i in range(nums_of_copies):
             adv_tensor_temp = adv_tensor.detach().clone().to(device).requires_grad_(True)
@@ -43,11 +46,10 @@ def SIM(model, lossfn, flows, labels, mask, step, step_length, device, min_val, 
         pert.loc[pert['Fwd Pkt Len Max'] < 0, ['Fwd Pkt Len Max']] = 0.
         pert.loc[pert['Fwd Pkt Len Min'] > 0, ['Fwd Pkt Len Min']] = 0.
 
-        # 对流量进行修正
         adv_flows += pert.values
         rectify_adv_flows(adv_flows, flows, pert)
 
-    # # 统计没有修改的流量
+    # Debug: đếm dòng không đổi
     # are_equal = (flows.reset_index(drop=True) == adv_flows.reset_index(drop=True)).all(axis=1)
     # count_equal_rows = are_equal.sum()
     t2 = time.perf_counter()

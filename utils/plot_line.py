@@ -1,3 +1,4 @@
+"""Line plot Fig. 4/5: detection vs số **copies** DGM, 5 surrogate, nhiều đường target + Average."""
 import pandas as pd
 import numpy as np
 import seaborn as sns
@@ -7,6 +8,7 @@ from pathlib import Path
 
 
 def plot_line(input: pd.DataFrame, fp_out: str = None):
+    """Cột ``Model``, ``Copies``; các cột còn lại là tỷ lệ % theo target."""
     df = input.reset_index()
 
     SM_model_nams = ['mlp_s', 'cnn_s', 'rescnn_s', 'lstm_s', 'Selfattention_s']

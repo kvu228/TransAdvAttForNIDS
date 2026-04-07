@@ -1,3 +1,7 @@
+"""Line plot Fig. 8/9: detection vs **số đặc trưng đầu vào surrogate** (cột số), theo attack.
+
+``input`` có ``Target Model``, ``Attack`` và các cột int (27, 30, …).
+"""
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -5,6 +9,7 @@ import matplotlib.gridspec as gridspec
 from pathlib import Path
 
 def plot_line2(input: pd.DataFrame, fp_out: str = None):
+    """Melt long-format rồi một đồ thị con cho mỗi target model."""
     df = input.reset_index()
 
     feature_cols = [c for c in df.columns if c not in ["Target Model", "Attack"]]

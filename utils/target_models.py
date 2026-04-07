@@ -1,3 +1,7 @@
+"""Kiến trúc **target** NIDS (66 đặc trưng): MLP, CNN 1D, ResCNN, LSTM, Self-Attention.
+
+Dùng cho đánh giá transfer và huấn luyện sạch; tên class kết thúc bằng ``_t``.
+"""
 import torch.nn as nn
 import torch
 import math
@@ -69,7 +73,7 @@ class cnn_t(nn.Module):
             if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
                 init.kaiming_normal_(m.weight, mode='fan_in', nonlinearity='leaky_relu')
                 if m.bias is not None:
-                    init.constant_(m.bias, 0)  # bias 初始化为 0
+                    init.constant_(m.bias, 0)
 
 class ResCNN_t(nn.Module):
     def __init__(self):

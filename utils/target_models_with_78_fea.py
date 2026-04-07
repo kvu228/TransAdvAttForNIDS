@@ -1,3 +1,7 @@
+"""Biến thể target **78 đặc trưng** (cùng họ kiến trúc với ``target_models``).
+
+Dùng khi ``load_net(78, ...)`` hoặc thí nghiệm mở rộng không gian đặc trưng (vd. mục 5.2).
+"""
 import torch.nn as nn
 import torch
 import math
@@ -69,7 +73,7 @@ class cnn_t_78(nn.Module):
             if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
                 init.kaiming_normal_(m.weight, mode='fan_in', nonlinearity='leaky_relu')
                 if m.bias is not None:
-                    init.constant_(m.bias, 0)  # bias 初始化为 0
+                    init.constant_(m.bias, 0)
 
 class ResCNN_t_78(nn.Module):
     def __init__(self):

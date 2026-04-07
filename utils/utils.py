@@ -1,4 +1,10 @@
 """
+Tiện ích lõi cho TransAdvAttForNIDS (Việt).
+
+Chứa: ``CustomDataset`` đọc CSV flow + chuẩn hóa min-max; ``load_net`` / ``init_net`` nạp
+surrogate (60 fea) và target (66/78 fea); ``normalize_df``; ``rectify_adv_flows`` đồng bộ
+đặc trưng phụ thuộc sau khi sửa Level-1; ``STORAGE_DIR`` (cần trùng môi trường khi chạy).
+
 Utility functions and classes for TransAdvAttForNIDS project.
 
 This module provides:
@@ -191,9 +197,14 @@ def init_net(model_type, model_name: str):
 
 def load_net(model_name_or_fea_num, fp_model_or_name: str = None, fp_model_opt: str = None):
     """
-    Load a pre-trained neural network model from a saved checkpoint.
-    Supports: load_net(model_name, fp_model) or load_net(fea_num, model_name, fp_model).
-    When fea_num=78, target models use 78-input variants from target_models_with_78_fea.
+    Nạp checkpoint đã huấn luyện.
+
+    Hai cách gọi:
+        - ``load_net(model_name, fp_model)``: tên dạng ``ids18_mlp_t`` / ``ton_cnn_s`` (khớp chuỗi trong code).
+        - ``load_net(fea_num, model_name, fp_model)``: nếu ``fea_num == 78`` thì dùng biến thể
+          target 78 chiều từ ``target_models_with_78_fea``; ngược lại target mặc định 66 fea.
+
+    Surrogate (tên chứa ``_..._s``) luôn 60 fea, không qua tham số ``fea_num``.
     """
     fea_num = None
     if fp_model_opt is not None:

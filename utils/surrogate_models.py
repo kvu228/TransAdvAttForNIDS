@@ -1,3 +1,8 @@
+"""Mô hình **surrogate** (60 đặc trưng) phục vụ sinh gradient cho tấn công.
+
+Gồm MLP, CNN 1D, ResCNN, LSTM (reshape 12×5), Self-Attention (6×10 + positional encoding).
+Tên class kết thúc bằng ``_s``; khớp ``fea_s.csv`` và minmax ``*_minmax_s``.
+"""
 import torch
 import torch.nn as nn
 import math

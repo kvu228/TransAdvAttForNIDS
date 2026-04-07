@@ -1,3 +1,8 @@
+"""Vẽ Fig. 6/7: bar chart tỷ lệ phát hiện (%) theo dropout cho từng surrogate.
+
+``input``: MultiIndex/DataFrame có cột ``Model`` (``*_s``) và ``Dropout_rate`` sau ``reset_index``.
+Lưu ``fp_out`` (150 dpi) và gọi ``plt.show()``.
+"""
 import pandas as pd
 import numpy as np
 import seaborn as sns
@@ -7,6 +12,7 @@ import matplotlib.ticker as ticker
 from pathlib import Path
 
 def plot_bar(input: pd.DataFrame, fp_out: str = None):
+    """Vẽ 5 subplot (mỗi loại surrogate) + legend target trên subplot cuối."""
     sns.set_theme(style="whitegrid")
     df = input.reset_index()
     

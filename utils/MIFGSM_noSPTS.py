@@ -1,3 +1,8 @@
+"""MI-FGSM trên tensor đã chuẩn hóa [0,1], **không** gọi ``rectify_adv_flows`` (no SPTS).
+
+Dùng khi perturb trực tiếp batch tensor (vd. vòng lặp huấn luyện); ``mask`` từ ``labels``
+để không tạo nhiễu trên mẫu benign. ``step_len`` có thể [B,1] cho bước per-sample.
+"""
 import torch
 
 def MIFGSM_noSPTS(net:torch.nn.Module, adv:torch.Tensor, labels:torch.Tensor, lossfn, step, step_len:torch.Tensor, dev):
@@ -6,7 +11,8 @@ def MIFGSM_noSPTS(net:torch.nn.Module, adv:torch.Tensor, labels:torch.Tensor, lo
     adv.requires_grad_(True)
     alpha = step_len.expand(len(adv), -1)
     
-    mask = labels.unsqueeze(1).expand(-1, adv.size(1)) # Dont generate adv flow for benign, using mask to zero pertubation.
+    # Chỉ perturb mẫu attack: nhân mask theo nhãn (benign → không đổi)
+    mask = labels.unsqueeze(1).expand(-1, adv.size(1))
 
     for _ in range(step):
         loss = lossfn(net(adv), labels)

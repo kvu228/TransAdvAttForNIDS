@@ -1,3 +1,7 @@
+"""Heatmap Fig. 2/3: detection rate theo ``step_size`` (hàng) và iteration (cột), 5 target.
+
+Cần cột ``Model``, ``step_size`` và các cột số iteration trong ``input``.
+"""
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import seaborn as sns
@@ -5,6 +9,7 @@ import pandas as pd
 from pathlib import Path
 
 def plot_hm(input: pd.DataFrame, fp_out: str = None):
+    """Layout 3+2 heatmap + một colorbar dọc."""
     df = input.reset_index()
 
     model_names = ['mlp_t', 'cnn_t', 'rescnn_t', 'lstm_t', 'Selfattention_t']
