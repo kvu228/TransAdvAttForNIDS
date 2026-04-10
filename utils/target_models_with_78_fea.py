@@ -36,7 +36,8 @@ class lstm_t_78(torch.nn.Module):
         )
     
     def forward(self, x):
-        x = torch.cat((x, torch.zeros(x.size(0), 2).to("cuda")), dim=1)
+        pad = torch.zeros(x.size(0), 2, device=x.device, dtype=x.dtype)
+        x = torch.cat((x, pad), dim=1)
         x, _ = self.lstm(torch.reshape(x, (x.size(0), 16, 5)))
         return self.classifier(x)
 
@@ -134,11 +135,12 @@ class SelfAttention_t_78(nn.Module):
         return position_encoding
     
     def forward(self, x):
-        x = torch.cat((x, torch.zeros(x.size(0), 2).to("cuda")), dim=1)
+        pad = torch.zeros(x.size(0), 2, device=x.device, dtype=x.dtype)
+        x = torch.cat((x, pad), dim=1)
         x = torch.reshape(x, (x.size(0), 8, 10))
 
         _, seq_len, _ = x.size()
-        x = x + self.positional_encoding[:seq_len, :].unsqueeze(0).to("cuda")
+        x = x + self.positional_encoding[:seq_len, :].unsqueeze(0).to(x.device)
         
         x = self.selfAttentionLayer(x)
         x = self.mlp(x)
@@ -146,7 +148,8 @@ class SelfAttention_t_78(nn.Module):
 
 if __name__ == "__main__":
     net = SelfAttention_t_78()
-    net.to('cuda')
-    x = torch.rand((128, 78)).to('cuda')
+    dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    net.to(dev)
+    x = torch.rand((128, 78), device=dev)
     y = net(x)
     print(y.shape)

@@ -30,6 +30,10 @@ from web_app.attack_service import (
 )
 from database.db_manager import init_db, log_simulation, get_history
 
+# Session state for last run (Compare / ExplainAI)
+if "last_run" not in st.session_state:
+    st.session_state["last_run"] = None
+
 # Page config
 st.set_page_config(
     page_title="SPTS NIDS Simulation",
@@ -166,7 +170,7 @@ if target_model and surrogate_model:
                     status_text.caption("Đang đánh giá trên Target model...")
 
             try:
-                adv_df, metrics = generate_aat_from_data(
+                raw_df, adv_df, metrics = generate_aat_from_data(
                     fp_raw_att=paths["fp_raw_att"],
                     fp_fea_s=paths["fp_fea_s"],
                     fp_minmax_s=paths["fp_minmax_s"],
@@ -186,6 +190,22 @@ if target_model and surrogate_model:
 
                 evasion_rate = metrics["evasion_rate"]
                 level1_stats = metrics.get("level1_stats", {})
+                attackable_features = metrics.get("attackable_features", [])
+
+                st.session_state["last_run"] = {
+                    "timestamp": datetime.now().isoformat(),
+                    "target_model": target_model,
+                    "surrogate_model": surrogate_model,
+                    "algorithm": algorithm,
+                    "iterations": iterations,
+                    "step_size": float(step_size),
+                    "copies": copies if algorithm == "DGM" else None,
+                    "dropout_rate": dropout_rate if algorithm == "DGM" else None,
+                    "raw_df": raw_df,
+                    "adv_df": adv_df,
+                    "metrics": metrics,
+                    "attackable_features": attackable_features,
+                }
 
                 # Display evasion rate
                 evasion_placeholder.metric(
@@ -241,21 +261,155 @@ if target_model and surrogate_model:
                 status_text.empty()
                 st.exception(e)
 
-# Tab Lịch sử
+# Compare + ExplainAI + History tabs
 st.markdown("---")
-st.subheader("📋 Lịch sử mô phỏng")
-st.caption("Các lần chạy Generate AAT được lưu tự động. Bảng hiển thị mới nhất ở trên.")
+tabs = st.tabs(["🧾 Compare AAT", "🧠 ExplainAI", "📋 Lịch sử"])
 
-history = get_history()
-if history:
-    df_history = pd.DataFrame(history)
-    cols = ["timestamp", "algorithm", "iterations", "step_size", "target_model", "surrogate_model", "evasion_rate"]
-    cols = [c for c in cols if c in df_history.columns]
-    # Use markdown table to avoid Arrow LargeUtf8 serialization
-    md = "| " + " | ".join(cols) + " |\n"
-    md += "|" + "|".join([" --- " for _ in cols]) + "|\n"
-    for _, row in df_history[cols].iterrows():
-        md += "| " + " | ".join(str(v) for v in row) + " |\n"
-    st.markdown(md)
-else:
-    st.info("Chưa có bản ghi. Chạy Generate AAT để bắt đầu.")
+with tabs[0]:
+    last_run = st.session_state.get("last_run")
+    if not last_run:
+        st.info("Chưa có kết quả để so sánh. Hãy bấm **Generate AAT** trước.")
+    else:
+        raw_df = last_run["raw_df"]
+        adv_df = last_run["adv_df"]
+        attackable = last_run.get("attackable_features", [])
+        shared_cols = [c for c in attackable if c in raw_df.columns and c in adv_df.columns]
+        if not shared_cols:
+            shared_cols = [c for c in raw_df.columns if c in adv_df.columns]
+
+        st.caption("So sánh AAT gốc (raw attack) và AAT được generate (adversarial) theo cùng thứ tự dòng.")
+        c1, c2 = st.columns(2)
+        with c1:
+            st.subheader("AAT gốc (raw)")
+            st.dataframe(raw_df.head(50), use_container_width=True)
+        with c2:
+            st.subheader("AAT generate (adv)")
+            st.dataframe(adv_df.head(50), use_container_width=True)
+
+        raw_bytes = raw_df.to_csv(index=False).encode("utf-8")
+        adv_bytes = adv_df.to_csv(index=False).encode("utf-8")
+        d1, d2 = st.columns(2)
+        with d1:
+            st.download_button(
+                "⬇️ Tải raw CSV",
+                data=raw_bytes,
+                file_name="aat_raw.csv",
+                mime="text/csv",
+                use_container_width=True,
+            )
+        with d2:
+            st.download_button(
+                "⬇️ Tải adv CSV",
+                data=adv_bytes,
+                file_name="aat_adv.csv",
+                mime="text/csv",
+                use_container_width=True,
+            )
+
+        st.subheader("Thống kê thay đổi (Δ = adv - raw)")
+        num_cols = [
+            c
+            for c in shared_cols
+            if pd.api.types.is_numeric_dtype(raw_df[c]) and pd.api.types.is_numeric_dtype(adv_df[c])
+        ]
+        if not num_cols:
+            st.warning("Không tìm thấy cột số để tính Δ.")
+        else:
+            delta = (adv_df[num_cols] - raw_df[num_cols]).astype("float64")
+            summary = (
+                pd.DataFrame(
+                    {
+                        "feature": num_cols,
+                        "mean(|Δ|)": delta.abs().mean().values,
+                        "mean(Δ)": delta.mean().values,
+                        "std(Δ)": delta.std(ddof=0).values,
+                        "changed_%": (delta.ne(0).mean() * 100).values,
+                    }
+                )
+                .sort_values("mean(|Δ|)", ascending=False)
+                .reset_index(drop=True)
+            )
+            st.dataframe(summary.head(30), use_container_width=True)
+
+with tabs[1]:
+    last_run = st.session_state.get("last_run")
+    if not last_run:
+        st.info("Chưa có kết quả để giải thích. Hãy bấm **Generate AAT** trước.")
+    else:
+        raw_df = last_run["raw_df"]
+        adv_df = last_run["adv_df"]
+        attackable = last_run.get("attackable_features", [])
+        shared_cols = [c for c in attackable if c in raw_df.columns and c in adv_df.columns]
+        if not shared_cols:
+            shared_cols = [c for c in raw_df.columns if c in adv_df.columns]
+
+        num_cols = [
+            c
+            for c in shared_cols
+            if pd.api.types.is_numeric_dtype(raw_df[c]) and pd.api.types.is_numeric_dtype(adv_df[c])
+        ]
+        if not num_cols:
+            st.warning("Không tìm thấy cột số để explain.")
+        else:
+            delta = (adv_df[num_cols] - raw_df[num_cols]).astype("float64")
+            importance = delta.abs().mean().sort_values(ascending=False)
+
+            st.caption("ExplainAI (delta-based): feature nào bị điều chỉnh mạnh nhất được xếp theo mean(|Δ|).")
+            top_k = st.slider(
+                "Top-K features",
+                min_value=5,
+                max_value=min(50, len(importance)),
+                value=min(15, len(importance)),
+            )
+            top = importance.head(top_k)
+
+            fig, ax = plt.subplots(figsize=(9, max(3, int(top_k * 0.28))))
+            ax.barh(list(reversed(top.index.tolist())), list(reversed(top.values.tolist())))
+            ax.set_xlabel("mean(|Δ|)")
+            ax.set_ylabel("feature")
+            ax.set_title("Top features bị điều chỉnh")
+            plt.tight_layout()
+            buf = io.BytesIO()
+            plt.savefig(buf, format="png", dpi=120)
+            buf.seek(0)
+            st.image(buf)
+            plt.close()
+
+            st.subheader("Drill-down theo 1 flow")
+            row_idx = st.number_input(
+                "Row index",
+                min_value=0,
+                max_value=max(0, len(raw_df) - 1),
+                value=0,
+                step=1,
+            )
+            row_idx = int(row_idx)
+            row_delta = (adv_df.loc[row_idx, num_cols] - raw_df.loc[row_idx, num_cols]).astype("float64")
+            row_imp = row_delta.abs().sort_values(ascending=False).head(top_k)
+            drill = pd.DataFrame(
+                {
+                    "feature": row_imp.index,
+                    "raw": raw_df.loc[row_idx, row_imp.index].values,
+                    "adv": adv_df.loc[row_idx, row_imp.index].values,
+                    "Δ": row_delta.loc[row_imp.index].values,
+                    "|Δ|": row_delta.loc[row_imp.index].abs().values,
+                }
+            ).reset_index(drop=True)
+            st.dataframe(drill, use_container_width=True)
+
+with tabs[2]:
+    st.subheader("📋 Lịch sử mô phỏng")
+    st.caption("Các lần chạy Generate AAT được lưu tự động. Bảng hiển thị mới nhất ở trên.")
+
+    history = get_history()
+    if history:
+        df_history = pd.DataFrame(history)
+        cols = ["timestamp", "algorithm", "iterations", "step_size", "target_model", "surrogate_model", "evasion_rate"]
+        cols = [c for c in cols if c in df_history.columns]
+        md = "| " + " | ".join(cols) + " |\n"
+        md += "|" + "|".join([" --- " for _ in cols]) + "|\n"
+        for _, row in df_history[cols].iterrows():
+            md += "| " + " | ".join(str(v) for v in row) + " |\n"
+        st.markdown(md)
+    else:
+        st.info("Chưa có bản ghi. Chạy Generate AAT để bắt đầu.")
