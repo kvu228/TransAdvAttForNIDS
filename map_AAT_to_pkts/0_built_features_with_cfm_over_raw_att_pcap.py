@@ -6,7 +6,7 @@ from utils.utils import STORAGE_DIR
 import subprocess, os, glob
 import pandas as pd
 
-fp_cfm = ''
+fp_cfm = '/mmlab_students/storageStudents/nguyenvd/nids/CICFlowMeter/CICFlowMeter-4.0/bin/CICFlowMeter'
 fp_input_dir = os.path.join(STORAGE_DIR, 'att_pcap')
 fp_output_dir = os.path.join(project_root_dir, 'output')
 subprocess.run([fp_cfm, fp_input_dir, fp_output_dir])

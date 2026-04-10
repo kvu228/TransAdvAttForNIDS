@@ -36,7 +36,8 @@ class lstm_t(torch.nn.Module):
         )
     
     def forward(self, x):
-        x = torch.cat((x, torch.zeros(x.size(0), 14).to("cuda")), dim=1)
+        pad = torch.zeros(x.size(0), 14, device=x.device, dtype=x.dtype)
+        x = torch.cat((x, pad), dim=1)
         x, _ = self.lstm(torch.reshape(x, (x.size(0), 16, 5)))
         return self.classifier(x)
 
@@ -134,11 +135,12 @@ class SelfAttention_t(nn.Module):
         return position_encoding
     
     def forward(self, x):
-        x = torch.cat((x, torch.zeros(x.size(0), 14).to("cuda")), dim=1)
+        pad = torch.zeros(x.size(0), 14, device=x.device, dtype=x.dtype)
+        x = torch.cat((x, pad), dim=1)
         x = torch.reshape(x, (x.size(0), 8, 10))
 
         _, seq_len, _ = x.size()
-        x = x + self.positional_encoding[:seq_len, :].unsqueeze(0).to("cuda")
+        x = x + self.positional_encoding[:seq_len, :].unsqueeze(0).to(x.device)
         
         x = self.selfAttentionLayer(x)
         x = self.mlp(x)

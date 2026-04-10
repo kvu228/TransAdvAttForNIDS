@@ -35,6 +35,78 @@ from utils.DGM import DGM
 LEVEL1_FEATURES = ["Fwd Pkt Len Max", "Fwd Pkt Len Min", "Fwd IAT Max", "Fwd IAT Min"]
 
 
+def iter_cuda_devices_by_free_mem() -> list[torch.device]:
+    """
+    Trả về danh sách device CUDA theo thứ tự VRAM free giảm dần.
+
+    Nếu không lấy được thông tin VRAM, fallback theo thứ tự cuda:0..N-1.
+    """
+    if not torch.cuda.is_available():
+        return []
+    n = torch.cuda.device_count()
+    try:
+        scored: list[tuple[int, int]] = []
+        for i in range(n):
+            free_b, _total_b = torch.cuda.mem_get_info(i)
+            scored.append((i, int(free_b)))
+        scored.sort(key=lambda t: t[1], reverse=True)
+        return [torch.device(f"cuda:{i}") for i, _ in scored]
+    except Exception:
+        return [torch.device(f"cuda:{i}") for i in range(n)]
+
+
+def pick_best_cuda_device() -> torch.device:
+    """
+    Chọn GPU có memory free lớn nhất.
+
+    Tránh OOM do mặc định dùng cuda:0 khi máy có nhiều GPU.
+    Nếu không query được mem, fallback cuda:0. Nếu không có CUDA, dùng CPU.
+    """
+    devices = iter_cuda_devices_by_free_mem()
+    return devices[0] if devices else torch.device("cpu")
+
+
+def _is_cuda_oom(e: Exception) -> bool:
+    msg = str(e).lower()
+    return ("out of memory" in msg) or ("cuda error" in msg and "memory" in msg)
+
+
+def move_model_to_best_device(model: torch.nn.Module) -> torch.device:
+    """
+    Thử move model sang GPU lần lượt; nếu OOM thì thử GPU khác; hết GPU thì dùng CPU.
+    """
+    if not torch.cuda.is_available():
+        return torch.device("cpu")
+
+    last_err: Optional[Exception] = None
+    for dev in iter_cuda_devices_by_free_mem():
+        try:
+            idx = dev.index if dev.index is not None else 0
+            torch.cuda.set_device(idx)
+            try:
+                torch.cuda.empty_cache()
+            except Exception:
+                pass
+            model.to(dev)
+            return dev
+        except RuntimeError as e:
+            last_err = e
+            if _is_cuda_oom(e):
+                try:
+                    torch.cuda.empty_cache()
+                except Exception:
+                    pass
+                continue
+            raise
+
+    # fallback CPU
+    model.to("cpu")
+    if last_err is not None:
+        # keep last OOM for debugging if needed (caller can log it)
+        pass
+    return torch.device("cpu")
+
+
 def get_mask(list_col: list, batch_size: int) -> torch.Tensor:
     """
     Tạo mask cho 4 đặc trưng Level-1 (ràng buộc SPTS).
@@ -136,7 +208,7 @@ def generate_aat_from_data(
     dropout_rate: float = 0.2,
     batch_size: int = 128,
     progress_callback: Optional[Callable[[int, int, int, Optional[float]], None]] = None,
-) -> tuple[pd.DataFrame, dict]:
+) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
     """
     Tạo AAT từ raw attack CSV và tính các metrics.
 
@@ -155,11 +227,12 @@ def generate_aat_from_data(
         progress_callback: Optional. Gọi với (current_chunk, total_chunks, processed_rows, eta_seconds).
 
     Returns:
-        (adv_flows_df, metrics_dict):
-        - adv_flows_df: DataFrame adversarial flows.
+        (raw_flows_df, adv_flows_df, metrics_dict):
+        - raw_flows_df: DataFrame flows trước khi perturb (cùng thứ tự với adv).
+        - adv_flows_df: DataFrame adversarial flows (sau perturb).
         - metrics_dict: {evasion_rate: float, level1_stats: dict}.
     """
-    dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    dev = pick_best_cuda_device()
     lossfn = CrossEntropyLoss()
 
     list_sm_col = pd.read_csv(fp_fea_s, header=0, index_col=None).columns.tolist()
@@ -170,7 +243,16 @@ def generate_aat_from_data(
         os.path.basename(fp_model_s).replace(".pth", ""),
         fp_model_s,
     )
-    surrogate_model.to(dev)
+    if dev.type == "cuda":
+        try:
+            surrogate_model.to(dev)
+        except RuntimeError as e:
+            if _is_cuda_oom(e):
+                dev = move_model_to_best_device(surrogate_model)
+            else:
+                raise
+    else:
+        surrogate_model.to(dev)
     if "lstm" in fp_model_s.lower():
         surrogate_model.train()
     else:
@@ -186,6 +268,7 @@ def generate_aat_from_data(
     att_fn = attack_map.get(algorithm.upper(), MIFGSM)
 
     # Collect all adv flows and level1 stats
+    all_raw_rows = []
     all_adv_rows = []
     level1_before = {f: [] for f in LEVEL1_FEATURES}
     level1_after = {f: [] for f in LEVEL1_FEATURES}
@@ -198,6 +281,8 @@ def generate_aat_from_data(
         if len(raw_flow) == 0:
             continue
         mask = get_mask(list_sm_col, len(raw_flow)).to(dev)
+        raw_flow = raw_flow.copy()
+        all_raw_rows.append(raw_flow.copy())
         df_flow = raw_flow[list_sm_col].copy()
 
         # Store before stats for Level-1
@@ -239,7 +324,6 @@ def generate_aat_from_data(
             if f in df_adv_flow.columns:
                 level1_after[f].extend(df_adv_flow[f].tolist())
 
-        raw_flow = raw_flow.copy()
         raw_flow[list_sm_col] = df_adv_flow
         all_adv_rows.append(raw_flow)
 
@@ -251,6 +335,7 @@ def generate_aat_from_data(
             progress_callback(chunk_idx, total_chunks, processed_rows, eta)
 
     adv_flows_df = pd.concat(all_adv_rows, ignore_index=True)
+    raw_flows_df = pd.concat(all_raw_rows, ignore_index=True)
 
     # Save AAT temporarily for evaluation (target model expects 66 features from raw)
     fp_aat_temp = os.path.join(STORAGE_DIR, "custom", "output", "aat_simulation_temp.csv")
@@ -279,8 +364,9 @@ def generate_aat_from_data(
     metrics = {
         "evasion_rate": evasion_rate,
         "level1_stats": level1_stats,
+        "attackable_features": list_sm_col,
     }
-    return adv_flows_df, metrics
+    return raw_flows_df, adv_flows_df, metrics
 
 
 def _compute_evasion_rate(

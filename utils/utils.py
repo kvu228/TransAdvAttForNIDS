@@ -216,37 +216,37 @@ def load_net(model_name_or_fea_num, fp_model_or_name: str = None, fp_model_opt: 
     if model_name[-1] == 's':
         if '_mlp_s' in model_name:
             net = mlp_s()
-            net.load_state_dict(torch.load(fp_model, weights_only=True))
+            net.load_state_dict(torch.load(fp_model, weights_only=True, map_location="cpu"))
         if '_cnn_s' in model_name:
             net = cnn_s()
-            net.load_state_dict(torch.load(fp_model, weights_only=True))
+            net.load_state_dict(torch.load(fp_model, weights_only=True, map_location="cpu"))
         if '_rescnn_s' in model_name:
             net = ResCNN_s()
-            net.load_state_dict(torch.load(fp_model, weights_only=True))
+            net.load_state_dict(torch.load(fp_model, weights_only=True, map_location="cpu"))
         if '_lstm_s' in model_name:
             net = lstm_s()
-            net.load_state_dict(torch.load(fp_model, weights_only=True))
+            net.load_state_dict(torch.load(fp_model, weights_only=True, map_location="cpu"))
         if '_Selfattention_s' in model_name:
             net = SelfAttention_s()
-            net.load_state_dict(torch.load(fp_model, weights_only=True))
+            net.load_state_dict(torch.load(fp_model, weights_only=True, map_location="cpu"))
         return net
     else:
         use_78 = (fea_num == 78)
         if '_mlp_t' in model_name:
             net = mlp_t_78() if use_78 else mlp_t()
-            net.load_state_dict(torch.load(fp_model, weights_only=True))
+            net.load_state_dict(torch.load(fp_model, weights_only=True, map_location="cpu"))
         if '_cnn_t' in model_name:
             net = cnn_t_78() if use_78 else cnn_t()
-            net.load_state_dict(torch.load(fp_model, weights_only=True))
+            net.load_state_dict(torch.load(fp_model, weights_only=True, map_location="cpu"))
         if '_rescnn_t' in model_name:
             net = ResCNN_t_78() if use_78 else ResCNN_t()
-            net.load_state_dict(torch.load(fp_model, weights_only=True))
+            net.load_state_dict(torch.load(fp_model, weights_only=True, map_location="cpu"))
         if '_lstm_t' in model_name:
             net = lstm_t_78() if use_78 else lstm_t()
-            net.load_state_dict(torch.load(fp_model, weights_only=True))
+            net.load_state_dict(torch.load(fp_model, weights_only=True, map_location="cpu"))
         if '_Selfattention_t' in model_name:
             net = SelfAttention_t_78() if use_78 else SelfAttention_t()
-            net.load_state_dict(torch.load(fp_model, weights_only=True))
+            net.load_state_dict(torch.load(fp_model, weights_only=True, map_location="cpu"))
         return net
 
 def get_var(n, x1, x2, rwa_var, x_mean, delta1, delta2, delta_mean):
