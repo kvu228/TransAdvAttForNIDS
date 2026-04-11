@@ -94,3 +94,38 @@ Files chính cần thay đổi
 - generate_AAT/generate_aat.py (thêm dispatch)
 - map_AAT_to_pkts/3_modify_pcap.py (fix bug truncate)
 - train_NIDS/adv_training_with_SPTS.py (thêm option attack method)
+
+--------
+
+Hoàn thành:
+1. utils/NIFGSM.py - Thuật toán NI-FGSM (Nesterov Iterative FGSM) cho AAT generation. Khác MI-FGSM ở chỗ tính gradient tại vị trí look-ahead (x + mu * momentum) thay vì vị trí hiện tại.                      
+2. utils/NIFGSM_forAdvTrain.py - Phiên bản NI-FGSM cho adversarial training (dùng nhãn thật, có clamp/inf handling).                                                                                           
+                                                                                                                                                                                                                 
+  Files đã sửa:                                                                                                                                                                                                  
+                                                                                                                                                                                                                 
+3. generate_AAT/generate_aat.py - Thêm import + dispatch cho NIFGSM                                                                                                                                            
+4. map_AAT_to_pkts/1_generate_aat.py - Thêm import + dispatch cho NIFGSM                                                                                                                                     
+5. train_NIDS/adv_training_with_SPTS.py - Thêm import NI-FGSM + tham số attack_name để chọn thuật toán defense training                                                                                        
+6. map_AAT_to_pkts/3_modify_pcap.py - Fix bug truncate_packet() dòng 61: logic +1 thừa gây cắt sai kích thước payload                                                                                          
+                                                                                                                                                                                                                 
+  Cách chạy:                                                                                                                                                                                                     
+                                                                                                                                                                                                                 
+  # 1. Generate AAT bằng NI-FGSM                                                                                                                                                                                 
+  cd generate_AAT                                                                                                                                                                                              
+  # Sửa attack_name = 'NIFGSM' trong generate_aat.py                                                                                                                                                             
+  python generate_aat.py
+                                                                                                                                                                                                                 
+  # 2. Test transferability                                                                                                                                                                                      
+  python test_aat.py                                                                                                                                                                                           
+                                                                                                                                                                                                                 
+  # 3. Adversarial training bằng NI-FGSM (cross-attack defense)                                                                                                                                                  
+  cd ../train_NIDS                                                                                                                                                                                             
+  # Sửa attack_name = 'NIFGSM' trong adv_training_with_SPTS.py                                                                                                                                                   
+  python adv_training_with_SPTS.py                                                                                                                                                                               
+                                                                                                                                                                                                               
+  Giá trị học thuật:                                                                                                                                                                                             
+                                                                                                                                                                                                               
+- NI-FGSM là thuật toán thứ 5 được tích hợp vào SPTS (paper chỉ có 4)                                                                                                                                          
+- So sánh transferability NI-FGSM vs MI-FGSM/SIM/VMI-FGSM/DGM -> bảng kết quả mới
+- Cross-attack defense (train bằng NI-FGSM, test bằng DGM) -> đánh giá tính tổng quát của phòng thủ mà paper chưa khảo sát                                                                                     
+- Fix bug truncate_packet -> đóng góp thực tế cho pipeline packet-level     
