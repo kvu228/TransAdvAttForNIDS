@@ -7,6 +7,7 @@ from utils.MIFGSM import MIFGSM
 from utils.SIM import SIM
 from utils.VMIFGSM import VMIFGSM
 from utils.DGM import DGM
+from utils.NIFGSM import NIFGSM
 
 import pandas as pd
 from torch.nn import CrossEntropyLoss
@@ -37,6 +38,8 @@ def main(dataset_name, model_name, model_type, attack_name, iteration, step_size
         att = VMIFGSM
     if attack_name == 'DGM':
         att = DGM
+    if attack_name == 'NIFGSM':
+        att = NIFGSM
 
     lossfn = CrossEntropyLoss()
 

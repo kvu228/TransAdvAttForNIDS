@@ -1,0 +1,5 @@
+hãy xem cấu trúc dự án và tập trung xem phần báo cáo trong docs, hãy giúp tôi xem có vấn đề gì cần chỉnh sửa không? và tóm gọn nội dung các slide phần section 1 và sections 2 lại cho đủ ý ko quá dài dòng
+
+vậy tổng kết lại là nhóm đã làm được gì so với bài báo, đã phát hiện được gì, đóng góp được gì? có hướng phát triển gì mới? cải tiến
+
+vậy bạn có thể giúp tôi phát triển đề tài hoặc đóng góp thêm, để tăng cao tính học thuật và đạt điểm cao

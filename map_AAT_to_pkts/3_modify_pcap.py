@@ -58,7 +58,7 @@ def pad_packet(ip, need_len):
 def truncate_packet(ip, need_len):
     """Shorten payload length to `need_len`."""
     l4 = ip.data
-    l4.data = l4.data[:len(l4.data)+ 1 - need_len if len(l4.data)+ 1 - need_len > 0 else 1]
+    l4.data = l4.data[:max(1, len(l4.data) - need_len)]
     if isinstance(l4, dpkt.udp.UDP):
         l4.ulen = len(l4)
     fix_checksums(ip)
