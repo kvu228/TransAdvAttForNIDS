@@ -8,13 +8,13 @@
     
 2. **Training tùy chỉnh và tạo AAT**.
     
-    Để giải quyết các lo ngại về dữ liệu đã chuẩn bị, chúng tôi cung cấp các script cho phép người dùng train các model riêng và tạo AAT. Mặc dù chúng tôi không cố định random seeds, các thí nghiệm lặp lại xác nhận rằng việc bỏ qua seed không ảnh hưởng đến các phát hiện hoặc kết luận cốt lõi của bài báo.
+    Để giải quyết các lo ngại về dữ liệu đã chuẩn bị, chúng tôi cung cấp các script cho phép người dùng train các model riêng và tạo AAT. Để huấn luyện đồng loạt nhiều kiến trúc và dataset, có thể dùng thư mục **`reimplemented_models`** (Mục 4.4). Mặc dù chúng tôi không cố định random seeds, các thí nghiệm lặp lại xác nhận rằng việc bỏ qua seed không ảnh hưởng đến các phát hiện hoặc kết luận cốt lõi của bài báo.
     
 3. **Ánh xạ AAT về các gói tin thực tế (bao gồm TANTRA)**.
     
     Nhóm thí nghiệm này cho thấy cách chuyển đổi AAT đã tạo về các gói tin mạng thực tế và cũng bao gồm các script để tạo AAT với TANTRA.
 
-Dựa trên các cân nhắc trên, README này được tổ chức như sau: Mục 2 bao gồm các điều kiện tiên quyết—thiết lập môi trường, tải dataset và các công cụ phụ trợ; Mục 3 giải thích cách tái tạo kết quả trong bài báo; Mục 4 và 5 mô tả training model tùy chỉnh và tạo AAT, tương ứng; Mục 6 chi tiết quy trình ánh xạ AAT đã tạo về các gói tin mạng thực tế; và Mục 7 cung cấp các ghi chú bổ sung.
+Dựa trên các cân nhắc trên, README này được tổ chức như sau: Mục 2 bao gồm các điều kiện tiên quyết—thiết lập môi trường, tải dataset và các công cụ phụ trợ; Mục 3 giải thích cách tái tạo kết quả trong bài báo; Mục 4 và 5 mô tả training model tùy chỉnh và tạo AAT, tương ứng; Mục 6 mô tả quy trình gốc trong bài báo liên quan CICFlowMeter (**hiện không tái hiện được** trong codebase này—xem 2.3); Mục 7 cung cấp các ghi chú bổ sung; Mục 8 hướng dẫn chạy dashboard Streamlit và cách đọc kết quả trên giao diện.
 
 # 2 Điều kiện tiên quyết
 
@@ -66,35 +66,15 @@ pip install pandas==2.2.3 numpy==2.0.2 dpkt==1.9.8 matplotlib==3.9.4 seaborn==0.
 - **[CIC-IDS-2018](https://www.unb.ca/cic/datasets/ids-2018.html)**
 - **[TON_IoT](https://research.unsw.edu.au/projects/toniot-datasets)**
 
-## 2.3 CICFlowMeter (CFM)
+## 2.3 CICFlowMeter (CFM) — trạng thái tái hiện
 
-**[CICFlowMeter](https://github.com/UNBCIC/CICFlowMeter)**: Nếu CICFlowMeter không được cài đặt đúng cách, các thí nghiệm trong Mục 6 (**Ánh xạ AAT về các gói tin thực tế**) không thể thực thi.
+**Trạng thái hiện tại:** Chuỗi thí nghiệm dựa trên **[CICFlowMeter](https://github.com/UNBCIC/CICFlowMeter)** (trích xuất đặc trưng từ PCAP, ánh xạ AAT về gói tin thực, tái trích xuất sau chỉnh sửa — tương ứng Mục 6 và các bước liên quan trong bài báo) **hiện không được tái hiện (reimplement) trong phiên bản codebase này.** Bạn có thể bỏ qua hoàn toàn phần cài đặt và vận hành CFM nếu chỉ làm việc trên CSV (training, tạo AAT trên bảng đặc trưng, dashboard Streamlit).
 
-**Lưu ý quan trọng về hệ điều hành**:
-- **Linux/Ubuntu**: CFM hoạt động tốt, yêu cầu quyền administrator
-- **Windows**: CFM được thiết kế cho Linux và có thể không hoạt động trên Windows. Các giải pháp:
-  1. **Sử dụng WSL2**: Cài đặt CFM trong WSL2 Ubuntu
-  2. **Sử dụng Docker**: Chạy CFM trong container Linux
-  3. **Bỏ qua Section 6**: Nếu chỉ cần training và generate AAT (Section 3-5), không cần CFM
+Mục 6 phía dưới vẫn được giữ như **mô tả quy trình gốc của bài báo** để tham chiếu; không coi đó là hướng dẫn chạy được end-to-end trên repo hiện tại.
 
-**Cài đặt CFM** (Linux/WSL2):
+**Khi nào không cần CFM:** training (Mục 4, gồm `reimplemented_models`), tạo AAT trên CSV (Mục 5), và Streamlit (Mục 8) — miễn là bạn dùng dữ liệu/feature đã có dạng CSV trong `STORAGE_DIR`.
 
-1. Sau khi cài đặt CFM, bạn cần cập nhật đường dẫn CFM trong ba script:
-   - `TransAdvAttForNIDS/map_AAT_to_pkts/0_built_features_with_cfm_over_raw_att_pcap.py`
-   - `TransAdvAttForNIDS/map_AAT_to_pkts/4_re-extract_features_with_cfm.py`
-   - `TransAdvAttForNIDS/TANTRA/1_re-extract_features_with_cfm.py`
-   
-   Biến liên quan là `fp_cfm`.
-
-2. Chạy CFM yêu cầu quyền administrator, vì vậy bất kỳ script nào gọi CFM phải chạy với quyền root. Tuy nhiên, chúng tôi nhận thấy rằng chỉ đơn giản sử dụng `sudo python script.py` không hoạt động. Do đó, chúng tôi cung cấp hai phương pháp thay thế:
-   - **Phương pháp 1**: Nhúng mật khẩu sudo trực tiếp vào lệnh `subprocess.run` của script (hy sinh bảo mật)
-   - **Phương pháp 2**: Cấu hình CFM để "chạy dưới sudo mà không yêu cầu mật khẩu"
-
-**Cấu hình sudo không cần mật khẩu** (Linux/WSL2):
-```bash
-# Thêm vào /etc/sudoers (sử dụng visudo)
-username ALL=(ALL) NOPASSWD: /path/to/CICFlowMeter
-```
+**Tham chiếu kỹ thuật (bản gốc dự án):** nếu sau này tự tiếp tục pipeline PCAP, cần cài CFM trên Linux/WSL2, cấu hình biến `fp_cfm` trong các script dưới `map_AAT_to_pkts/` và `TANTRA/`, và xử lý quyền chạy CFM (thường cần quyền administrator / cấu hình sudo phù hợp). Chi tiết từng bước có trong lịch sử README tiếng Anh của dự án; không lặp lại đầy đủ tại đây vì nhánh tái hiện hiện không dựa vào CFM.
 
 ## 2.4 Tải Models và Datasets đã xử lý
 
@@ -209,6 +189,63 @@ Chúng tôi không giới thiệu các lý thuyết hoặc phương pháp mới 
 
 4. Các cấu hình mặc định là training một MLP-t với 66 input features trên TON_IoT. Nếu bạn muốn train một model khác hoặc chuyển sang CIC-IDS-2018, hãy điều chỉnh tên model, đường dẫn dataset, giá trị min–max scaling và input features. Các tham số này được xác định rõ ràng trong các dòng 84–91 của script.
 
+## 4.4 Huấn luyện hàng loạt với `reimplemented_models`
+
+Thư mục `TransAdvAttForNIDS/reimplemented_models/` chứa các script huấn luyện lại toàn bộ kiến trúc (MLP, CNN, ResCNN, LSTM, Self-Attention) cho cả target (`t`) và surrogate (`s`), trên **TON_IoT** và **CIC-IDS-2018** (`ids18`), tương thích `init_net` / `load_net` trong `utils/`.
+
+**Điều kiện dữ liệu** (trong `STORAGE_DIR/dataset/`, sau khi đã cấu hình `STORAGE_DIR` trong `utils/utils.py`):
+
+- `fea_t.csv`, `fea_s.csv`
+- `{ton|ids18}_minmax_t.csv`, `{ton|ids18}_minmax_s.csv`
+- `{ton|ids18}_sam_train_t.csv`, `{ton|ids18}_sam_train_s.csv` (với IDS-2018 cần oversample và đặt tên như Mục 2.2)
+
+**Chạy từ thư mục gốc của repo** (`TransAdvAttForNIDS/`):
+
+1. **Chỉ huấn luyện chuẩn (cross-entropy, không adversarial):**
+   ```bash
+   python reimplemented_models/train_all_standard_models.py
+   ```
+   Tùy chọn thường dùng: `--datasets ton ids18`, `--epochs 10`, `--architectures mlp cnn ...`, `--model-types t s`, `--output-dir /đường/dẫn/lưu`.
+
+2. **Adversarial training có ràng buộc SPTS** (MI-FGSM + mask Level-1):
+   ```bash
+   python reimplemented_models/train_all_adv_with_spts.py
+   ```
+
+3. **Adversarial training thông thường** (không SPTS):
+   ```bash
+   python reimplemented_models/train_all_adv_normal.py
+   ```
+
+4. **Chạy cả ba bước theo thứ tự** (chuẩn → SPTS → normal adv):
+   ```bash
+   ./reimplemented_models/run_train_all.sh
+   ```
+   Có thể truyền thêm tham số cho từng bước, ví dụ: `./reimplemented_models/run_train_all.sh --epochs 5`.
+
+5. **Ba bước trên, mỗi bước song song nhiều GPU** (mỗi phase một lệnh `parallel_train_on_gpus`):
+   ```bash
+   ./reimplemented_models/run_train_all_parallel.sh 0 1 2 3
+   ```
+
+**Song song nhiều GPU cho từng script riêng** (mỗi GPU một shard, log trong `reimplemented_models/parallel_logs/`):
+
+```bash
+./reimplemented_models/run_train_standard_parallel.sh 0 1 2 3
+./reimplemented_models/run_train_adv_spts_parallel.sh 0 1 2 3
+./reimplemented_models/run_train_adv_normal_parallel.sh 0 1 2 3
+```
+
+Hoặc dùng trực tiếp `./reimplemented_models/parallel_train_on_gpus.sh <tên_script.py> <các_gpu_id> -- <tham_số_python>`.
+
+**Tên file checkpoint** (mặc định ghi vào cùng thư mục `reimplemented_models/` nếu không đổi `--output-dir`):
+
+- Chuẩn: `{dataset}_{arch}_{t|s}.pth` (ví dụ `ton_mlp_t.pth`)
+- Adv + SPTS: `advtrain_withSPTS_{dataset}_{arch}_{t|s}.pth`
+- Adv thường: `normal_advtrain_{dataset}_{arch}_{t|s}.pth`
+
+**Dùng checkpoint với dashboard Streamlit (Mục 8):** ứng dụng quét thư mục `STORAGE_DIR/custom/pre-trained_models/` và nhận diện target/surrogate theo hậu tố tên file `_t` / `_s` (phần tên không gồm `.pth`). Hãy **sao chép hoặc symlink** các `.pth` cần dùng vào đó (hoặc đặt `--output-dir` trỏ thẳng tới thư mục đó khi train). Đồng thời cần có `{dataset}_raw_att.csv` trong `STORAGE_DIR/dataset/` cho đúng bộ dữ liệu đã chọn cặp model.
+
 # 5 Tạo AAT
 
 1. Chuyển đến thư mục đích.
@@ -233,11 +270,13 @@ Chúng tôi không giới thiệu các lý thuyết hoặc phương pháp mới 
 
 5. AAT đã được tạo được lưu dưới dạng **aat.csv** trong `STORAGE_DIR/custom/output`.
 
-# 6 Ánh xạ AAT về các gói tin thực tế
+# 6 Ánh xạ AAT về các gói tin thực tế (mô tả quy trình bài báo — không tái hiện CFM trong repo hiện tại)
+
+**Lưu ý:** Nội dung Mục 6 mô tả **quy trình gốc** trong bài báo (ánh xạ AAT về PCAP, dùng CICFlowMeter để trích xuất/tái trích xuất đặc trưng). Như đã nêu ở Mục 2.3, **chuỗi CICFlowMeter hiện không được tái hiện** trong codebase này; không kỳ vọng chạy end-to-end các bước dưới đây mà không tự bổ sung môi trường và chỉnh sửa thêm.
 
 Nhóm thí nghiệm này ánh xạ AAT đã được tạo về các gói tin thực tế và sau đó re-extract features với CFM. Lưu ý rằng các attack flows đã được lọc thêm, để lại tổng cộng 36,980 flows (xem đoạn đầu tiên của Mục 5.3.2 trong bài báo). Vì quy trình liên quan đến nhiều bước, các script được đánh số để chỉ ra thứ tự thực thi đúng.
 
-**Lưu ý cho Windows**: Section này yêu cầu CICFlowMeter và có thể không hoạt động trên Windows native. Khuyến nghị sử dụng WSL2.
+**Lưu ý cho Windows**: Khi tự tiếp tục pipeline PCAP, CFM thường yêu cầu Linux/WSL2 thay vì Windows native.
 
 ## 6.1 Cho SPTS
 
@@ -405,4 +444,41 @@ Nếu bạn muốn chạy trực tiếp trên Windows mà không dùng WSL2:
 - **Lỗi đường dẫn**: Sử dụng `os.path.join()` thay vì nối chuỗi trực tiếp
 - **Lỗi permissions**: Chạy PowerShell/CMD với quyền Administrator
 - **Lỗi CUDA**: Nếu không có GPU NVIDIA, cài đặt PyTorch CPU version
-- **Lỗi CICFlowMeter**: Sử dụng WSL2 hoặc bỏ qua Section 6
+- **Lỗi CICFlowMeter / PCAP**: Bỏ qua Mục 6; dùng luồng CSV, `reimplemented_models` và Streamlit (Mục 8) — xem Mục 2.3
+
+# 8 Dashboard Streamlit (`web_app`)
+
+Giao diện web mô phỏng tạo AAT trên CSV, đánh giá **Evasion Rate** trên target model, xem biểu đồ đặc trưng Level-1 (SPTS), so sánh raw/adv, và lưu lịch sử chạy.
+
+## 8.1 Cài đặt và chạy
+
+1. Cài thêm dependency (nếu môi trường chưa có):
+   ```bash
+   pip install streamlit
+   ```
+2. Đảm bảo đã cấu hình `STORAGE_DIR` trong `utils/utils.py` và có đủ dữ liệu trong `STORAGE_DIR/dataset/` (đặc biệt `{ton|ids18}_raw_att.csv`, `fea_t.csv`, `fea_s.csv`, file minmax tương ứng).
+3. Đặt các file `.pth` (target kết thúc `_t`, surrogate kết thúc `_s`) vào `STORAGE_DIR/custom/pre-trained_models/` — có thể lấy từ Mục 4.4 (`reimplemented_models`) bằng copy/symlink hoặc `--output-dir` khi train.
+4. Từ thư mục gốc repo:
+   ```bash
+   streamlit run web_app/app.py
+   ```
+5. Mở URL mà Streamlit in ra (thường `http://localhost:8501`).
+
+## 8.2 Luồng sử dụng trên sidebar
+
+1. Chọn **Target Model** (NIDS cần đo độ robust) và **Surrogate Model** (mạng dùng để tính gradient tạo nhiễu). Nên chọn cặp cùng dataset, ví dụ `ton_mlp_t` và `ton_mlp_s`.
+2. Chọn **thuật toán** (MIFGSM, SIM, VMIFGSM, DGM) và chỉnh **Iterations**, **Step size**; với DGM thêm **Copies** và **Dropout rate**.
+3. Bấm **Generate AAT** và chờ thanh tiến trình (tạo AAT theo batch, sau đó đánh giá trên target).
+
+## 8.3 Đọc kết quả trên màn hình chính
+
+- **Evasion Rate (Bypass NIDS %):** tỷ lệ phần trăm luồng tấn công bị target model phân loại nhầm thành **Benign**. Giá trị **càng cao** thì tấn công đối nghịch càng “thành công” trong mô phỏng (NIDS dễ bị bypass).
+- **Biểu đồ cột (4 đặc trưng Level-1):** so sánh giá trị trung bình **trước** và **sau** nhiễu cho các cột SPTS (`Fwd Pkt Len Max/Min`, `Fwd IAT Max/Min`). Giúp thấy mức dịch chuyển đặc trưng sau tấn công.
+
+## 8.4 Các tab bổ sung
+
+- **Compare AAT:** hiển thị 50 dòng đầu của bảng raw attack và bảng adversarial cạnh nhau; có nút tải CSV **raw** và **adv**. Phần **Thống kê thay đổi** liệt kê các cột số với `mean(|Δ|)`, `mean(Δ)`, `std(Δ)` và tỷ lệ dòng có thay đổi (`changed_%`) — hữu ích để biết feature nào bị chỉnh nhiều trên toàn tập.
+- **ExplainAI:** xếp hạng feature theo `mean(|Δ|)` (mức độ chỉnh trung bình); có thanh **Top-K** và phần **Drill-down theo 1 flow** (chọn chỉ số dòng) để xem raw/adv/Δ từng đặc trưng cho một luồng.
+- **Lịch sử:** bảng markdown các lần **Generate AAT** đã ghi (thuật toán, siêu tham số, cặp model, Evasion Rate, thời gian) — dùng để so sánh nhanh nhiều lần chạy.
+
+Nếu sidebar báo không tìm thấy model, kiểm tra lại đường dẫn `STORAGE_DIR/custom/pre-trained_models/` và quy ước tên file `_t` / `_s`. Nếu báo thiếu raw attack, kiểm tra `{dataset}_raw_att.csv` trong `STORAGE_DIR/dataset/`.
