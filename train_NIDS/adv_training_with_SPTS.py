@@ -3,6 +3,7 @@ project_root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root_dir)
 from utils.utils import CustomDataset, init_net, STORAGE_DIR
 from utils.MIFGSM_forAdvTrain import MIFGSM_forAdvTrain
+from utils.NIFGSM_forAdvTrain import NIFGSM_forAdvTrain
 from torch.nn import CrossEntropyLoss
 from torch.optim import Adam
 import torch
@@ -19,7 +20,7 @@ def get_mask(list_col:list, batch_size):
     tensor_temp = torch.from_numpy(df_temp.loc[0].values).repeat(batch_size, 1)
     return tensor_temp
 
-def main(dataset_name, model_name, model_type, fp_fea, fp_minmax, fp_dataset, fp_output):
+def main(dataset_name, model_name, model_type, fp_fea, fp_minmax, fp_dataset, fp_output, attack_name='MIFGSM'):
 
     dev = torch.device('cuda')
     k = 0.8
@@ -63,7 +64,8 @@ def main(dataset_name, model_name, model_type, fp_fea, fp_minmax, fp_dataset, fp
             # get adv flow
             if len(df_part_flow) < batch_size:
                 mask = mask[0:len(df_part_flow)]
-            df_adv_flow = MIFGSM_forAdvTrain(net, criterion, df_part_flow[list_fea], labels, mask, 7, 140, dev, df_minmax.loc[0], df_minmax.loc[1])
+            adv_train_fn = NIFGSM_forAdvTrain if attack_name == 'NIFGSM' else MIFGSM_forAdvTrain
+            df_adv_flow = adv_train_fn(net, criterion, df_part_flow[list_fea], labels, mask, 7, 140, dev, df_minmax.loc[0], df_minmax.loc[1])
             df_adv_flow = ((df_adv_flow - df_minmax.loc[0]) / (df_minmax.loc[1] - df_minmax.loc[0])).fillna(0).replace([np.inf, -np.inf], [1.0, -1.])
             pos = df_part_flow['label'] == 0
             df_adv_flow.loc[pos] = df_part_flow_66fea.loc[pos]
@@ -77,7 +79,8 @@ def main(dataset_name, model_name, model_type, fp_fea, fp_minmax, fp_dataset, fp
             print(f'\r Adv training with SPTS, Epoch:{i+1}/{epoch},Progress:{pos_row},Loss:{loss:.4f}', end='    ')
 
         print()
-    torch.save(net.state_dict(), os.path.join(fp_output, f"advtrain_withSPTS_{dataset_name}_{model_name}.pth"))
+    suffix = f"_{attack_name}" if attack_name != 'MIFGSM' else ""
+    torch.save(net.state_dict(), os.path.join(fp_output, f"advtrain_withSPTS_{dataset_name}_{model_name}{suffix}.pth"))
 
 if __name__ == '__main__':
 
@@ -90,4 +93,5 @@ if __name__ == '__main__':
     fp_dataset = os.path.join(STORAGE_DIR, 'dataset', f'{dataset_name}_sam_train_{model_type}.csv')
     fp_output = os.path.join(STORAGE_DIR, 'custom', 'pre-trained_models')
 
-    main(dataset_name, model_name, model_type, fp_fea, fp_minmax, fp_dataset, fp_output)
+    attack_name = 'MIFGSM'  # or 'NIFGSM'
+    main(dataset_name, model_name, model_type, fp_fea, fp_minmax, fp_dataset, fp_output, attack_name)
